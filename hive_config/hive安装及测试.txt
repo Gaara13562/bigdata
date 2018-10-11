@@ -1,0 +1,43 @@
+1. 安装mysql，手动创建hive数据库，并且指定字符编码为 latin1
+create database hive;
+alter database hive character set latin1;
+
+2. 配置hive-site.xml
+
+3. 第一次需要执行初始化命令：schematool -dbType mysql -initSchema
+
+4. 查看那初始化后的信息：schematool -dbType mysql -info
+
+5. 启动hiveserver2
+这里需要说明一点：
+	如果是在单用户条件下，此时无需配置hive.metastore.uris属性
+	如果是在多用户添加下，此时需要配置hive.metastore.uris属性，同时需要先开启metastore服务， hive --service metastore &
+然后开启启动 hiveserver2 服务：
+	方式一：$HIVE_HOME/bin/hiveserver2 &
+	方式二：$HIVE_HOME/bin/hive --service hiveserver2 &
+
+6. 通过beeline连接Hive客户端：
+beeline -> !connect jdbc:hive2://node1:2181,node2:2181,node3:2181/;serviceDiscoveryMode=zookeeper;zooKeeperNamespace=hiveserver2_zk root root
+beeline -> !connect jdbc:hive2://node1:10000/default root root
+
+7. 命令测试
+create database if not exists db_test;
+drop database db_test;
+
+create table tbl_test(
+id INT,
+name STRING,
+age INT,
+dept STRING,
+hobbies ARRAY<STRING>,
+desc MAP<STRING, STRING>)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY ','
+COLLECTION ITEMS TERMINATED BY '-'
+MAP KEYS TERMINATED BY ':';
+
+tbl_test的文件内容
+1,安迪,23,研发部,h1-h2-h3,gender:female-salary:10000
+2,布鲁克,24,研发部,h4-h5-h3,gender:male-salary:13000
+2,辛迪,26,销售部,h1-h4-h6,gender:female-salary:12000
+4,艾伦,25,人事部,h2-h5-h6,gender:male-salary:15000
