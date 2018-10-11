@@ -1,5 +1,5 @@
 # study
 Hello, Github...
 
-1. HADOOP ZOOKEEPER HIVE HBASE SPARK MAHOUT
-2. PYTHON PYTHON-WEB(DKANGO) DATA-ANALYSIS(SPARK) DEEP-LEARNING(TENSORFLOW)
+1. Hadoop ZooKeeper Hive Hbase Spark Mahout
+2. Python Python-web(Django) Data-analysis(Spark) Deep-learning(Tensorflow)
