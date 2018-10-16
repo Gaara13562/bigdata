@@ -1,0 +1,49 @@
+Spark配置可以分为 standalone 和 yarn 两种模式
+
+准备工作：下载，解压缩，配置环境变量，复制配置文件
+	cp spark-env.sh.template spark-env.sh
+	cp slaves.template slaves
+	cp spark-defaults.conf.template spark-defaults.conf
+
+1.	spark-env.sh的配置（重要配置）
+	1.1	standalone 模式主要配置
+		# 配置master主机名，不配置则默认为当前主机
+		export SPARK_MASTER_HOST=node1
+		# 访问master的接口，不配置则默认为7077，区别于WebUI端口默认是8080
+		export SPARK_MASTER_PORT=7077
+		# 启用ZooKeeper，配置高可用，在任何一台机器上启动master都会在ZK中注册
+		export SPARK_DAEMON_JAVA_OPTS="-Dspark.deploy.recoveryMode=ZOOKEEPER -Dspark.deploy.zookeeper.url=node1:2181,node2:2181,node3:2181 -Dspark.deploy.zookeeper.dir=/spark"
+		
+		启动 master 和 slaves 命令:
+			$SPARK_HOME/sbin/start-all.sh
+			$SPARK_HOME/sbin/start-master.sh
+		提交任务的命令：
+			$SPARK_HOME/bin/spark-submit --class main-cls --master spark://host:port --deploy-mode client(默认)/cluster app.jar [args]
+			
+	1.2 Yarn 模式
+		# 配置Hadoop和Yarn配置文件所在路径
+		export HADOOP_CONF_DIR=/root/hadoop-2.9.1/etc/hadoop
+		export YARN_CONF_DIR=/root/hadoop-2.9.1/etc/hadoop
+		
+		重要：配置完spark-env.sh 之后需要去$HADOOP_HOME/etc/hadoop/yarn-site.xml文件中添加如下配置:
+			防止由于虚拟内存的原因导致SparkContext无法被初始化
+			<property>
+				<name>yarn.nodemanager.vmem-check-enabled</name>
+				<value>false</value>
+			</property>
+
+		
+		此时无需启动 master或者slaves，相当于环境已经准备好了。
+		提交任务的命令：
+			$SPARK_HOME/bin/spark-submit --class main-cls --master yarn --deploy-mode client(默认)/cluster app.jar [args]
+
+2.	配置slaves
+	slaves 里面添加worker的主机名即可
+
+3.	配置spark-defaults.conf
+	由于每次运行spark任务的时候都会将spark运行所需的jar包打包上传到hdfs上，为了避免这个过程，直接在hdfs上存储所有的jar包
+		hdfs dfs -mkdir /spark_jars
+		hdfs dfs -put $SPARK_HOME/jars/* /spark_jars
+	spark-defaults.conf 里面添加 
+		spark.yarn.jars hdfs://bigdata/spark_jars/*
+		或者 spark.yarn.archive	hdfs://bigdata/spark_jars/
